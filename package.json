@@ -17,7 +17,8 @@
     "@line/bot-sdk": "^6.1.0",
     "express": "^4.16.3",
     "mongoose": "^5.1.7",
-    "mongoose-timestamp": "^0.6.0"
+    "mongoose-timestamp": "^0.6.0",
+    "morgan": "^1.9.0"
   },
   "devDependencies": {
     "dotenv": "^6.0.0"

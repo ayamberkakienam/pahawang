@@ -3,6 +3,7 @@ const dotenv = require('dotenv').config();
 const mongoose = require('mongoose');
 const express = require('express');
 const lineRouter = require('./line');
+const morgan = require('morgan');
 
 mongoose.connect(process.env.MONGO_URL || 'mongodb://localhost/pahawang')
 .then(() => console.log('connected to mongo database'))
@@ -13,6 +14,7 @@ mongoose.connect(process.env.MONGO_URL || 'mongodb://localhost/pahawang')
 
 const app = express();
 
+app.use(morgan());
 app.use(lineRouter);
 
 const port = process.env.PORT || 3000;
