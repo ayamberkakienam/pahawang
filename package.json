@@ -1,0 +1,20 @@
+{
+  "name": "pahawang-bot",
+  "version": "1.0.0",
+  "description": "Simple bot for pahawang trip",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/jauhararifin/pahawang-bot"
+  },
+  "author": "Jauhar Arifin",
+  "license": "ISC",
+  "dependencies": {
+    "@line/bot-sdk": "^6.1.0",
+    "express": "^4.16.3",
+    "mongoose": "^5.1.7"
+  }
+}
