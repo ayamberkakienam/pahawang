@@ -1,7 +1,8 @@
 
-import { MessageEvent, TextMessage } from '@line/bot-sdk';
+import { Client, MessageEvent, TextMessage } from '@line/bot-sdk';
 
 import { Handler } from './handler';
+import { Replier } from '.';
 
 export interface HandlerRoute {
   pattern: RegExp;
@@ -12,7 +13,7 @@ export class Router {
   
   private routes: HandlerRoute[] = [];
 
-  constructor() {
+  constructor(private client: Client) {
     this.middleware = this.middleware.bind(this);
     this.use = this.use.bind(this);
     this.handleTextMessageEvent = this.handleTextMessageEvent.bind(this);
@@ -24,11 +25,13 @@ export class Router {
 
   private async handleTextMessageEvent(event: MessageEvent) {  
     const message = (event.message as TextMessage).text;
+    const replyToken = event.replyToken
+    const replier = new Replier(this.client, replyToken);
 
     for (const handlerRoute of this.routes) {
       const matches = message.match(handlerRoute.pattern);
       if (matches) {
-        await handlerRoute.handler(event, matches);
+        await handlerRoute.handler(event, matches, replier);
       }
     }
   }

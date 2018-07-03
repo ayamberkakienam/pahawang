@@ -1,6 +1,8 @@
 
-import { MessageEvent, TextEventMessage } from '@line/bot-sdk';
+import { MessageEvent } from '@line/bot-sdk';
+
+import { Replier } from './replier';
 
 export interface Handler {
-  (event?: MessageEvent, matches?: string[]): Promise<void>;
+  (event?: MessageEvent, matches?: string[], replier?: Replier): Promise<void>;
 }
