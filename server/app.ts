@@ -14,4 +14,4 @@ mongoose.connect(process.env.MONGO_URL || 'mongodb://localhost/pahawang')
 export const app = express();
 
 app.use(morgan('combined'));
-app.use(lineRouter);
+app.use('/line', lineRouter);
