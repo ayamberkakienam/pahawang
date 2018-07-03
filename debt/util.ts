@@ -27,15 +27,16 @@ export function debtsToPersonDebtsInRoom(roomId: string, debts: Document[]): Per
   const personDebts = [];
   for (const from in result) {
     if (result.hasOwnProperty(from)) {
+      const personDebt: PersonDebt = { from, roomId, to: {}, };
       for (const to in result[from]) {
         if (result[from].hasOwnProperty(to)) {
-          personDebts.push({
-            from, to, roomId,
+          personDebt.to[to] = {
             debts: result[from][to].debts.map(debt => ({ amount: debt.amount, note: debt.note })),
-            paids: result[from][to].paids.map(paid => ({ amount: paid.amount, note: paid.note }))
-          });
+            paids: result[from][to].paids.map(debt => ({ amount: debt.amount, note: debt.note })),
+          };
         }
       }
+      personDebts.push(personDebt);
     }
   }
 

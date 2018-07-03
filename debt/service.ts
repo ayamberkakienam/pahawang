@@ -11,9 +11,7 @@ export interface Value {
 export interface PersonDebt {
   roomId: string;
   from: string;
-  to: string;
-  debts: Value[];
-  paids: Value[];
+  to: {[to: string]: { debts: Value[], paids: Value[] }};
 }
 
 export async function addDebt(roomId: string, from: string, to: string, amount: number, note = ''): Promise<void> {
@@ -37,9 +35,14 @@ export async function getAllDebt(roomId: string): Promise<PersonDebt[]> {
   return debtsToPersonDebtsInRoom(roomId, debts);
 }
 
-export async function getAllDebtFromUser(roomId: string, from: string): Promise<PersonDebt[]> {
+export async function getAllDebtFromUser(roomId: string, from: string): Promise<PersonDebt> {
   const debts: Document[] = await DebtModel.find({ roomId, from }).exec();
-  return debtsToPersonDebtsInRoom(roomId, debts);
+  const results = await debtsToPersonDebtsInRoom(roomId, debts);
+  if (results.length === 0) {
+    return { roomId, from, to: {} };
+  } else {
+    return results[0];
+  }
 }
 
 export async function getTotalDebtFromUser(roomId: string, from: string): Promise<number> {
