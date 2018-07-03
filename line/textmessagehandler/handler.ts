@@ -1,6 +1,6 @@
 
-import { TextEventMessage } from '@line/bot-sdk';
+import { MessageEvent, TextEventMessage } from '@line/bot-sdk';
 
 export interface Handler {
-  (matches?: string[], replyToken?: string, userId?: string, roomId?: string, text?: string): Promise<void>;
+  (event?: MessageEvent, matches?: string[]): Promise<void>;
 }

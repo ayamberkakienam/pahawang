@@ -15,20 +15,33 @@ const lineHandler = new Router();
 
 export const lineRouter: express.Router = express.Router();
 
-lineHandler.use(/([a-zA-Z ]+)\s+[uU][tT][aA][nN][gG]\s+([a-zA-Z ]+)\s+([0-9]+)\s*(.*)/, async (matches, replyToken, userId, roomId, text) => {
+const getEventRoomId = (event: line.MessageEvent) => {
+  if (event.source.type === 'user') {
+    return event.source.userId;
+  } else if (event.source.type === 'room') {
+    return event.source.roomId;
+  } else {
+    return event.source.groupId;
+  }
+};
+
+lineHandler.use(/([a-zA-Z ]+)\s+[uU][tT][aA][nN][gG]\s+([a-zA-Z ]+)\s+([0-9]+)\s*(.*)/, async (event, matches) => {
   const [ all, from, to, amount, note ] = matches;
+  const roomId = getEventRoomId(event);
   await debtService.addDebt(roomId, from, to, Number(amount), note);
-  return lineClient.replyMessage(replyToken, { type: 'text', text: 'oke' });
+  return lineClient.replyMessage(event.replyToken, { type: 'text', text: 'oke' });
 });
 
-lineHandler.use(/([a-zA-Z ]+)\s+[bB][aA][yY][aA][rR]\s+([a-zA-Z ]+)\s+([0-9]+)\s*(.*)/, async (matches, replyToken, userId, roomId, text) => {
+lineHandler.use(/([a-zA-Z ]+)\s+[bB][aA][yY][aA][rR]\s+([a-zA-Z ]+)\s+([0-9]+)\s*(.*)/, async (event, matches) => {
   const [ all, from, to, amount, note ] = matches;
+  const roomId = getEventRoomId(event);
   await debtService.addDebt(roomId, from, to, Number(amount), note);
-  return lineClient.replyMessage(replyToken, { type: 'text', text: 'oke' });
+  return lineClient.replyMessage(event.replyToken, { type: 'text', text: 'oke' });
 });
 
-lineHandler.use(/[iI][nN][fF][oO]\s+[uU][tT][aA][nN][gG]\s+([a-zA-Z ]+)\s*$/, async (matches, replyToken, userId, roomId, text) => {
+lineHandler.use(/[iI][nN][fF][oO]\s+[uU][tT][aA][nN][gG]\s+([a-zA-Z ]+)\s*$/, async (event, matches) => {
   const user = matches[1];
+  const roomId = getEventRoomId(event);
   const debtInfo = await debtService.getAllDebtFromUser(roomId, user);
 
   const replyMessage = debtInfo.map(debt => {
@@ -38,10 +51,11 @@ lineHandler.use(/[iI][nN][fF][oO]\s+[uU][tT][aA][nN][gG]\s+([a-zA-Z ]+)\s*$/, as
     return `ke ${debt.to} utang: ${totalDebt}, dibayar ${totalPaid}, sisa: ${remaining}`;
   }).join(`\n`);
 
-  return lineClient.replyMessage(replyToken, { type: 'text', text: replyMessage } );
+  return lineClient.replyMessage(event.replyToken, { type: 'text', text: replyMessage } );
 });
 
-lineHandler.use(/[iI][nN][fF][oO]\s+[uU][tT][aA][nN][gG]\s*/, async (matches, replyToken, userId, roomId, text) => {
+lineHandler.use(/[iI][nN][fF][oO]\s+[uU][tT][aA][nN][gG]\s*/, async (event, matches) => {
+  const roomId = getEventRoomId(event);
   const debtInfo = await debtService.getAllDebt(roomId);
 
   const replyMessage = debtInfo.map(debt => {
@@ -51,8 +65,7 @@ lineHandler.use(/[iI][nN][fF][oO]\s+[uU][tT][aA][nN][gG]\s*/, async (matches, re
     return `${debt.from} ke ${debt.to} utang: ${totalDebt}, dibayar ${totalPaid}, sisa: ${remaining}`;
   }).join(`\n`);
 
-  return lineClient.replyMessage(replyToken, { type: 'text', text: replyMessage });
+  return lineClient.replyMessage(event.replyToken, { type: 'text', text: replyMessage });
 });
 
 lineRouter.post('/webhooks', lineHandler.middleware());
-

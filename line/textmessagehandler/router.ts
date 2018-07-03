@@ -22,23 +22,13 @@ export class Router {
     this.routes.push({ pattern, handler });
   }
 
-  private async handleTextMessageEvent(event: MessageEvent) {
-    const source = event.source;
-  
-    const userId = source.userId;
-    let roomId = source.userId;
-    if (source.type === 'room') {
-      roomId = source.roomId;
-    } else if (source.type === 'group') {
-      roomId = source.groupId;
-    }
-  
+  private async handleTextMessageEvent(event: MessageEvent) {  
     const message = (event.message as TextMessage).text;
 
     for (const handlerRoute of this.routes) {
       const matches = message.match(handlerRoute.pattern);
       if (matches) {
-        await handlerRoute.handler(matches, event.replyToken, userId, roomId, message);
+        await handlerRoute.handler(event, matches);
       }
     }
   }
