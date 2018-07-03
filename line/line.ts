@@ -9,8 +9,11 @@ import {
   getAllDebtFromUser,
   getAllDebt,
   getTotalDebtFromUser,
+  PersonDebt,
 } from '../debt';
 import { Router, Handler } from './textmessagehandler';
+import { personDebtToLineBubble } from './debtformat';
+import { FlexContainer, FlexBubble, FlexCarousel } from '@line/bot-sdk';
 
 const lineConfig = {
   channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
@@ -43,6 +46,23 @@ const toIDR = (amount: number) => currencyFormatter.format(amount, {
   format: '%s%v'
 });
 
+const personDebtDetailText = (personDebt: PersonDebt): string => {
+  return Object.keys(personDebt.to).map(to => {
+    const totalDebt = personDebt.to[to].debts.map(x => x.amount).reduce((a,b) => a + b, 0);
+    const totalPaid = personDebt.to[to].paids.map(x => x.amount).reduce((a,b) => a + b, 0);
+    const remaining = totalDebt - totalPaid;
+
+    let remainingStr = `sisa ${toIDR(remaining)}`;
+    if (remaining === 0) {
+      remainingStr = `lunas`;
+    } else if (remaining < 0) {
+      remainingStr = `kelebihan ${toIDR(-remaining)}`;
+    }
+    
+    return `ke ${toProperCase(to)} utang: ${toIDR(totalDebt)}, dibayar ${toIDR(totalPaid)}, ${remainingStr}`;
+  }).join(`\n`);
+};
+
 lineHandler.use(/([a-zA-Z ]+)\s+[uU][tT][aA][nN][gG]\s+([a-zA-Z ]+)\s+([0-9]+)\s*(.*)/, async (event, matches, replier) => {
   const [ all, from, to, amount, note ] = matches;
   const roomId = getEventRoomId(event);
@@ -62,51 +82,27 @@ lineHandler.use(/([a-zA-Z ]+)\s+[bB][aA][yY][aA][rR]\s+([a-zA-Z ]+)\s+([0-9]+)\s
 lineHandler.use(/[iI][nN][fF][oO]\s+[uU][tT][aA][nN][gG]\s+([a-zA-Z ]+)\s*$/, async (event, matches, replier) => {
   const user = matches[1].toLowerCase();
   const roomId = getEventRoomId(event);
-  const debtInfo = await getAllDebtFromUser(roomId, user);
+  const debtInfo: PersonDebt = await getAllDebtFromUser(roomId, user);
 
-  if (debtInfo.length === 0) {
+  if (Object.keys(debtInfo.to).length === 0) {
     await replier.text('belum ada hutang');
   } else {
-    const replyMessage = debtInfo.map(debt => {
-      const totalDebt = debt.debts.map(x => x.amount).reduce((a,b) => a + b, 0);
-      const totalPaid = debt.paids.map(x => x.amount).reduce((a,b) => a + b, 0);
-      const remaining = totalDebt - totalPaid;
-
-      let remainingStr = `sisa ${toIDR(remaining)}`;
-      if (remaining === 0) {
-        remainingStr = `lunas`;
-      } else if (remaining < 0) {
-        remainingStr = `kelebihan ${toIDR(-remaining)}`;
-      }
-      
-      return `ke ${toProperCase(debt.to)} utang: ${toIDR(totalDebt)}, dibayar ${toIDR(totalPaid)}, ${remainingStr}`;
-    }).join(`\n`);
-    await replier.text(replyMessage);
+    const altText = personDebtDetailText(debtInfo);
+    await replier.flex(personDebtToLineBubble(debtInfo), altText);
   }
 });
 
 lineHandler.use(/[iI][nN][fF][oO]\s+[uU][tT][aA][nN][gG]\s*/, async (event, matches, replier) => {
   const roomId = getEventRoomId(event);
-  const debtInfo = await getAllDebt(roomId);
+  const debtInfo: PersonDebt[] = await getAllDebt(roomId);
 
   if (debtInfo.length === 0) {
-    await replier.text('belum ada hutang');
+    await replier.text('belum ada hutang-hutangan');
   } else {
-    const replyMessage = debtInfo.map(debt => {
-      console.log(debt);
-      const totalDebt = debt.debts.map(x => x.amount).reduce((a,b) => a + b, 0);
-      const totalPaid = debt.paids.map(x => x.amount).reduce((a,b) => a + b, 0);
-      const remaining = totalDebt - totalPaid;
+    const personDebtFlexes: FlexBubble[] = debtInfo.map(personDebtToLineBubble);
+    const replyBubble: FlexCarousel = { type: 'carousel', contents: personDebtFlexes };
 
-      let remainingStr = `sisa ${toIDR(remaining)}`;
-      if (remaining === 0) {
-        remainingStr = `lunas`;
-      } else if (remaining < 0) {
-        remainingStr = `kelebihan ${toIDR(-remaining)}`;
-      }
-
-      return `${toProperCase(debt.from)} ke ${toProperCase(debt.to)} utang: ${toIDR(totalDebt)}, dibayar ${toIDR(totalPaid)}, ${remainingStr}`;
-    }).join(`\n`);
-    await replier.text(replyMessage);
+    const altText = debtInfo.map(personDebtDetailText).join(`\n`);
+    await replier.flex(replyBubble, altText);
   }
 });
