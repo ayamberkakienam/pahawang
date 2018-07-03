@@ -6,7 +6,8 @@ import {
   addDebt,
   payDebt,
   getAllDebtFromUser,
-  getAllDebt
+  getAllDebt,
+  getTotalDebtFromUser,
 } from '../debt';
 import { Router, Handler } from './textmessagehandler';
 
@@ -29,22 +30,28 @@ const getEventRoomId = (event: line.MessageEvent) => {
   }
 };
 
+function toProperCase(str) {
+  return str.replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+}
+
 lineHandler.use(/([a-zA-Z ]+)\s+[uU][tT][aA][nN][gG]\s+([a-zA-Z ]+)\s+([0-9]+)\s*(.*)/, async (event, matches, replier) => {
   const [ all, from, to, amount, note ] = matches;
   const roomId = getEventRoomId(event);
-  await addDebt(roomId, from, to, Number(amount), note);
-  await replier.text('oke');
+  await addDebt(roomId, from.toLowerCase(), to.toLowerCase(), Number(amount), note);
+  const total = await getTotalDebtFromUser(roomId, from.toLowerCase());
+  await replier.text(`oke, total utang ${toProperCase(from)} ${total}`);
 });
 
 lineHandler.use(/([a-zA-Z ]+)\s+[bB][aA][yY][aA][rR]\s+([a-zA-Z ]+)\s+([0-9]+)\s*(.*)/, async (event, matches, replier) => {
   const [ all, from, to, amount, note ] = matches;
   const roomId = getEventRoomId(event);
-  await payDebt(roomId, from, to, Number(amount), note);
-  await replier.text('oke');
+  await payDebt(roomId, from.toLowerCase(), to.toLowerCase(), Number(amount), note);
+  const total = await getTotalDebtFromUser(roomId, from.toLowerCase());
+  await replier.text(`oke, total utang ${toProperCase(from)} ${total}`);
 });
 
 lineHandler.use(/[iI][nN][fF][oO]\s+[uU][tT][aA][nN][gG]\s+([a-zA-Z ]+)\s*$/, async (event, matches, replier) => {
-  const user = matches[1];
+  const user = matches[1].toLowerCase();
   const roomId = getEventRoomId(event);
   const debtInfo = await getAllDebtFromUser(roomId, user);
 
@@ -52,7 +59,7 @@ lineHandler.use(/[iI][nN][fF][oO]\s+[uU][tT][aA][nN][gG]\s+([a-zA-Z ]+)\s*$/, as
     const totalDebt = debt.debts.map(x => x.amount).reduce((a,b) => a + b, 0);
     const totalPaid = debt.paids.map(x => x.amount).reduce((a,b) => a + b, 0);
     const remaining = totalDebt - totalPaid;
-    return `ke ${debt.to} utang: ${totalDebt}, dibayar ${totalPaid}, sisa: ${remaining}`;
+    return `ke ${toProperCase(debt.to)} utang: ${totalDebt}, dibayar ${totalPaid}, sisa: ${remaining}`;
   }).join(`\n`);
 
   await replier.text(replyMessage);
@@ -63,10 +70,11 @@ lineHandler.use(/[iI][nN][fF][oO]\s+[uU][tT][aA][nN][gG]\s*/, async (event, matc
   const debtInfo = await getAllDebt(roomId);
 
   const replyMessage = debtInfo.map(debt => {
+    console.log(debt);
     const totalDebt = debt.debts.map(x => x.amount).reduce((a,b) => a + b, 0);
     const totalPaid = debt.paids.map(x => x.amount).reduce((a,b) => a + b, 0);
     const remaining = totalDebt - totalPaid;
-    return `${debt.from} ke ${debt.to} utang: ${totalDebt}, dibayar ${totalPaid}, sisa: ${remaining}`;
+    return `${toProperCase(debt.from)} ke ${toProperCase(debt.to)} utang: ${totalDebt}, dibayar ${totalPaid}, sisa: ${remaining}`;
   }).join(`\n`);
 
   await replier.text(replyMessage);
