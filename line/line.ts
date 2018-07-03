@@ -55,27 +55,49 @@ lineHandler.use(/[iI][nN][fF][oO]\s+[uU][tT][aA][nN][gG]\s+([a-zA-Z ]+)\s*$/, as
   const roomId = getEventRoomId(event);
   const debtInfo = await getAllDebtFromUser(roomId, user);
 
-  const replyMessage = debtInfo.map(debt => {
-    const totalDebt = debt.debts.map(x => x.amount).reduce((a,b) => a + b, 0);
-    const totalPaid = debt.paids.map(x => x.amount).reduce((a,b) => a + b, 0);
-    const remaining = totalDebt - totalPaid;
-    return `ke ${toProperCase(debt.to)} utang: ${totalDebt}, dibayar ${totalPaid}, sisa: ${remaining}`;
-  }).join(`\n`);
+  if (debtInfo.length === 0) {
+    await replier.text('belum ada hutang');
+  } else {
+    const replyMessage = debtInfo.map(debt => {
+      const totalDebt = debt.debts.map(x => x.amount).reduce((a,b) => a + b, 0);
+      const totalPaid = debt.paids.map(x => x.amount).reduce((a,b) => a + b, 0);
+      const remaining = totalDebt - totalPaid;
 
-  await replier.text(replyMessage);
+      let remainingStr = `sisa ${remaining}`;
+      if (remaining === 0) {
+        remainingStr = `lunas`;
+      } else if (remaining < 0) {
+        remainingStr = `kelebihan ${-remaining}`;
+      }
+      
+      return `ke ${toProperCase(debt.to)} utang: ${totalDebt}, dibayar ${totalPaid}, ${remainingStr}`;
+    }).join(`\n`);
+    await replier.text(replyMessage);
+  }
 });
 
 lineHandler.use(/[iI][nN][fF][oO]\s+[uU][tT][aA][nN][gG]\s*/, async (event, matches, replier) => {
   const roomId = getEventRoomId(event);
   const debtInfo = await getAllDebt(roomId);
 
-  const replyMessage = debtInfo.map(debt => {
-    console.log(debt);
-    const totalDebt = debt.debts.map(x => x.amount).reduce((a,b) => a + b, 0);
-    const totalPaid = debt.paids.map(x => x.amount).reduce((a,b) => a + b, 0);
-    const remaining = totalDebt - totalPaid;
-    return `${toProperCase(debt.from)} ke ${toProperCase(debt.to)} utang: ${totalDebt}, dibayar ${totalPaid}, sisa: ${remaining}`;
-  }).join(`\n`);
+  if (debtInfo.length === 0) {
+    await replier.text('belum ada hutang');
+  } else {
+    const replyMessage = debtInfo.map(debt => {
+      console.log(debt);
+      const totalDebt = debt.debts.map(x => x.amount).reduce((a,b) => a + b, 0);
+      const totalPaid = debt.paids.map(x => x.amount).reduce((a,b) => a + b, 0);
+      const remaining = totalDebt - totalPaid;
 
-  await replier.text(replyMessage);
+      let remainingStr = `sisa ${remaining}`;
+      if (remaining === 0) {
+        remainingStr = `lunas`;
+      } else if (remaining < 0) {
+        remainingStr = `kelebihan ${-remaining}`;
+      }
+
+      return `${toProperCase(debt.from)} ke ${toProperCase(debt.to)} utang: ${totalDebt}, dibayar ${totalPaid}, ${remainingStr}`;
+    }).join(`\n`);
+    await replier.text(replyMessage);
+  }
 });
