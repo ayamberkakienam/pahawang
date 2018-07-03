@@ -1,7 +1,13 @@
 
 import * as express from 'express';
 import * as line from '@line/bot-sdk';
-import * as debtService from '../debt';
+
+import {
+  addDebt,
+  payDebt,
+  getAllDebtFromUser,
+  getAllDebt
+} from '../debt';
 import { Router, Handler } from './textmessagehandler';
 
 const lineConfig = {
@@ -11,9 +17,7 @@ const lineConfig = {
 
 const lineClient: line.Client = new line.Client(lineConfig);
 
-const lineHandler = new Router();
-
-export const lineRouter: express.Router = express.Router();
+export const lineHandler = new Router();
 
 const getEventRoomId = (event: line.MessageEvent) => {
   if (event.source.type === 'user') {
@@ -28,21 +32,21 @@ const getEventRoomId = (event: line.MessageEvent) => {
 lineHandler.use(/([a-zA-Z ]+)\s+[uU][tT][aA][nN][gG]\s+([a-zA-Z ]+)\s+([0-9]+)\s*(.*)/, async (event, matches) => {
   const [ all, from, to, amount, note ] = matches;
   const roomId = getEventRoomId(event);
-  await debtService.addDebt(roomId, from, to, Number(amount), note);
+  await addDebt(roomId, from, to, Number(amount), note);
   return lineClient.replyMessage(event.replyToken, { type: 'text', text: 'oke' });
 });
 
 lineHandler.use(/([a-zA-Z ]+)\s+[bB][aA][yY][aA][rR]\s+([a-zA-Z ]+)\s+([0-9]+)\s*(.*)/, async (event, matches) => {
   const [ all, from, to, amount, note ] = matches;
   const roomId = getEventRoomId(event);
-  await debtService.addDebt(roomId, from, to, Number(amount), note);
+  await payDebt(roomId, from, to, Number(amount), note);
   return lineClient.replyMessage(event.replyToken, { type: 'text', text: 'oke' });
 });
 
 lineHandler.use(/[iI][nN][fF][oO]\s+[uU][tT][aA][nN][gG]\s+([a-zA-Z ]+)\s*$/, async (event, matches) => {
   const user = matches[1];
   const roomId = getEventRoomId(event);
-  const debtInfo = await debtService.getAllDebtFromUser(roomId, user);
+  const debtInfo = await getAllDebtFromUser(roomId, user);
 
   const replyMessage = debtInfo.map(debt => {
     const totalDebt = debt.debts.map(x => x.amount).reduce((a,b) => a + b, 0);
@@ -56,7 +60,7 @@ lineHandler.use(/[iI][nN][fF][oO]\s+[uU][tT][aA][nN][gG]\s+([a-zA-Z ]+)\s*$/, as
 
 lineHandler.use(/[iI][nN][fF][oO]\s+[uU][tT][aA][nN][gG]\s*/, async (event, matches) => {
   const roomId = getEventRoomId(event);
-  const debtInfo = await debtService.getAllDebt(roomId);
+  const debtInfo = await getAllDebt(roomId);
 
   const replyMessage = debtInfo.map(debt => {
     const totalDebt = debt.debts.map(x => x.amount).reduce((a,b) => a + b, 0);
@@ -67,5 +71,3 @@ lineHandler.use(/[iI][nN][fF][oO]\s+[uU][tT][aA][nN][gG]\s*/, async (event, matc
 
   return lineClient.replyMessage(event.replyToken, { type: 'text', text: replyMessage });
 });
-
-lineRouter.post('/webhooks', lineHandler.middleware());
