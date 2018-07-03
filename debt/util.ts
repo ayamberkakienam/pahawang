@@ -3,7 +3,7 @@ import { Document } from 'mongoose';
 import { PersonDebt } from './service';
 
 export function debtsToPersonDebtsInRoom(roomId: string, debts: Document[]): PersonDebt[] {
-  debts = debts.filter(debt => debt.get('from').length > 0 && debt.get('to').length > 0 && debt.get('amount') > 0);
+  debts = debts.filter(debt => debt.get('from').length > 0 && debt.get('to').length > 0);
   const result = {};
   for (const debt of debts) {
     const from = debt.get('from');
@@ -15,7 +15,7 @@ export function debtsToPersonDebtsInRoom(roomId: string, debts: Document[]): Per
       result[from] = {};
     }
     if (!(to in result[from])) {
-      result[from][to] = { debt: [], paid: [] };
+      result[from][to] = { debts: [], paids: [] };
     }
     if (amount > 0) {
       result[from][to]['debts'].push({ from, to, amount, note });

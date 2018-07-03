@@ -7,5 +7,6 @@ export {
   addDebt,
   getAllDebt,
   getAllDebtFromUser,
+  getTotalDebtFromUser,
   payDebt,
 } from './service';
