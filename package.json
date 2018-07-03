@@ -27,6 +27,7 @@
   "dependencies": {
     "@line/bot-sdk": "^6.1.0",
     "currency-formatter": "^1.4.2",
+    "dotenv": "^6.0.0",
     "express": "^4.16.3",
     "moment": "^2.22.2",
     "mongoose": "^5.1.7",
@@ -41,7 +42,6 @@
     "@types/moment": "^2.13.0",
     "@types/mongoose": "^5.0.18",
     "@types/morgan": "^1.7.35",
-    "dotenv": "^6.0.0",
     "nodemon": "^1.17.5",
     "ts-node": "^7.0.0",
     "tslint": "^5.10.0"
