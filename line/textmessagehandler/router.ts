@@ -2,7 +2,7 @@
 import { Client, MessageEvent, TextMessage } from '@line/bot-sdk';
 
 import { Handler } from './handler';
-import { Replier } from '.';
+import { Replier } from './replier';
 
 export interface HandlerRoute {
   pattern: RegExp;
@@ -25,7 +25,7 @@ export class Router {
 
   private async handleTextMessageEvent(event: MessageEvent) {  
     const message = (event.message as TextMessage).text;
-    const replyToken = event.replyToken
+    const replyToken = event.replyToken;
     const replier = new Replier(this.client, replyToken);
 
     for (const handlerRoute of this.routes) {
