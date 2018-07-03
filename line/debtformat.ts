@@ -18,7 +18,8 @@ const toIDR = (amount: number) => currencyFormatter.format(amount, {
 });
 
 export function personDebtToLineBubble(debt: PersonDebt): FlexBubble  {
-  const currentDate = moment().format('MMMM Do YYYY, h:mm:ss a');
+  moment.locale('ID');
+  const currentDate = moment().format('LLL');
   const separator: FlexComponent = { type: 'separator', margin: 'xxl' };
   let total = 0;
 
@@ -46,6 +47,23 @@ export function personDebtToLineBubble(debt: PersonDebt): FlexBubble  {
         ]
       }));
 
+      let remaining: FlexComponent = { type: 'box', layout: 'horizontal',
+        contents: [
+          { type: 'text', text: 'Belum dibayar', weight: 'bold', size: 'sm', color: '#555555', flex: 0 },
+          { type: 'text', text: toIDR(currentTotal), size: 'sm', color: '#111111', align: 'end' }
+        ]
+      };
+      if (currentTotal === 0) {
+        remaining = { type: 'text', text: 'Lunas', weight: 'bold', size: 'sm', color: '#555555', flex: 0 };
+      } else if (currentTotal < 0) {
+        remaining =  { type: 'box', layout: 'horizontal',
+          contents: [
+            { type: 'text', text: 'Kelebihan', weight: 'bold', size: 'sm', color: '#555555', flex: 0 },
+            { type: 'text', text: toIDR(-currentTotal), size: 'sm', color: '#111111', align: 'end' }
+          ]
+        };
+      }
+
       const debtsBody: FlexBox = {
         type: 'box',
         layout: 'vertical',
@@ -53,14 +71,7 @@ export function personDebtToLineBubble(debt: PersonDebt): FlexBubble  {
         spacing: 'sm',
         contents: [
           { type: 'text', text: toProperCase(to), weight: 'bold', size: 'sm'} as FlexComponent
-        ].concat(debtsContent).concat([
-          { type: 'box', layout: 'horizontal',
-            contents: [
-              { type: 'text', text: 'Total', weight: 'bold', size: 'sm', color: '#555555', flex: 0 },
-              { type: 'text', text: toIDR(currentTotal), size: 'sm', color: '#111111', align: 'end' }
-            ]
-          }
-        ]),
+        ].concat(debtsContent).concat([remaining]),
       };
 
       contents.push(debtsBody);

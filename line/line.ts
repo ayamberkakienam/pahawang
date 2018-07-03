@@ -68,7 +68,14 @@ lineHandler.use(/([a-zA-Z ]+)\s+[uU][tT][aA][nN][gG]\s+([a-zA-Z ]+)\s+([0-9]+)\s
   const roomId = getEventRoomId(event);
   await addDebt(roomId, from.toLowerCase(), to.toLowerCase(), Number(amount), note);
   const total = await getTotalDebtFromUser(roomId, from.toLowerCase());
-  await replier.text(`oke, total utang ${toProperCase(from)} ${toIDR(total)}`);
+
+  if (total > 0) {
+    await replier.text(`oke, total utang ${toProperCase(from)} ${toIDR(total)}`);
+  } else if (total === 0) {
+    await replier.text(`oke, utang ${toProperCase(from)} lunas semua`);
+  } else {
+    await replier.text(`oke, x bayar kelebihan ${toIDR(-total)}`);
+  }
 });
 
 lineHandler.use(/([a-zA-Z ]+)\s+[bB][aA][yY][aA][rR]\s+([a-zA-Z ]+)\s+([0-9]+)\s*(.*)/, async (event, matches, replier) => {
@@ -76,7 +83,14 @@ lineHandler.use(/([a-zA-Z ]+)\s+[bB][aA][yY][aA][rR]\s+([a-zA-Z ]+)\s+([0-9]+)\s
   const roomId = getEventRoomId(event);
   await payDebt(roomId, from.toLowerCase(), to.toLowerCase(), Number(amount), note);
   const total = await getTotalDebtFromUser(roomId, from.toLowerCase());
-  await replier.text(`oke, total utang ${toProperCase(from)} ${toIDR(total)}`);
+  
+  if (total > 0) {
+    await replier.text(`oke, total utang ${toProperCase(from)} ${toIDR(total)}`);
+  } else if (total === 0) {
+    await replier.text(`oke, utang ${toProperCase(from)} lunas semua`);
+  } else {
+    await replier.text(`oke, x bayar kelebihan ${toIDR(-total)}`);
+  }
 });
 
 lineHandler.use(/[iI][nN][fF][oO]\s+[uU][tT][aA][nN][gG]\s+([a-zA-Z ]+)\s*$/, async (event, matches, replier) => {
