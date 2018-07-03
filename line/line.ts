@@ -1,6 +1,7 @@
 
 import * as express from 'express';
 import * as line from '@line/bot-sdk';
+import * as currencyFormatter from 'currency-formatter';
 
 import {
   addDebt,
@@ -30,16 +31,24 @@ const getEventRoomId = (event: line.MessageEvent) => {
   }
 };
 
-function toProperCase(str) {
+function toProperCase(str: string): string {
   return str.replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
 }
+
+const toIDR = (amount: number) => currencyFormatter.format(amount, {
+  symbol: 'Rp',
+  decimal: ',',
+  thousand: '.',
+  precision: 2,
+  format: '%s%v'
+});
 
 lineHandler.use(/([a-zA-Z ]+)\s+[uU][tT][aA][nN][gG]\s+([a-zA-Z ]+)\s+([0-9]+)\s*(.*)/, async (event, matches, replier) => {
   const [ all, from, to, amount, note ] = matches;
   const roomId = getEventRoomId(event);
   await addDebt(roomId, from.toLowerCase(), to.toLowerCase(), Number(amount), note);
   const total = await getTotalDebtFromUser(roomId, from.toLowerCase());
-  await replier.text(`oke, total utang ${toProperCase(from)} ${total}`);
+  await replier.text(`oke, total utang ${toProperCase(from)} ${toIDR(total)}`);
 });
 
 lineHandler.use(/([a-zA-Z ]+)\s+[bB][aA][yY][aA][rR]\s+([a-zA-Z ]+)\s+([0-9]+)\s*(.*)/, async (event, matches, replier) => {
@@ -47,7 +56,7 @@ lineHandler.use(/([a-zA-Z ]+)\s+[bB][aA][yY][aA][rR]\s+([a-zA-Z ]+)\s+([0-9]+)\s
   const roomId = getEventRoomId(event);
   await payDebt(roomId, from.toLowerCase(), to.toLowerCase(), Number(amount), note);
   const total = await getTotalDebtFromUser(roomId, from.toLowerCase());
-  await replier.text(`oke, total utang ${toProperCase(from)} ${total}`);
+  await replier.text(`oke, total utang ${toProperCase(from)} ${toIDR(total)}`);
 });
 
 lineHandler.use(/[iI][nN][fF][oO]\s+[uU][tT][aA][nN][gG]\s+([a-zA-Z ]+)\s*$/, async (event, matches, replier) => {
@@ -63,14 +72,14 @@ lineHandler.use(/[iI][nN][fF][oO]\s+[uU][tT][aA][nN][gG]\s+([a-zA-Z ]+)\s*$/, as
       const totalPaid = debt.paids.map(x => x.amount).reduce((a,b) => a + b, 0);
       const remaining = totalDebt - totalPaid;
 
-      let remainingStr = `sisa ${remaining}`;
+      let remainingStr = `sisa ${toIDR(remaining)}`;
       if (remaining === 0) {
         remainingStr = `lunas`;
       } else if (remaining < 0) {
-        remainingStr = `kelebihan ${-remaining}`;
+        remainingStr = `kelebihan ${toIDR(-remaining)}`;
       }
       
-      return `ke ${toProperCase(debt.to)} utang: ${totalDebt}, dibayar ${totalPaid}, ${remainingStr}`;
+      return `ke ${toProperCase(debt.to)} utang: ${toIDR(totalDebt)}, dibayar ${toIDR(totalPaid)}, ${remainingStr}`;
     }).join(`\n`);
     await replier.text(replyMessage);
   }
@@ -89,14 +98,14 @@ lineHandler.use(/[iI][nN][fF][oO]\s+[uU][tT][aA][nN][gG]\s*/, async (event, matc
       const totalPaid = debt.paids.map(x => x.amount).reduce((a,b) => a + b, 0);
       const remaining = totalDebt - totalPaid;
 
-      let remainingStr = `sisa ${remaining}`;
+      let remainingStr = `sisa ${toIDR(remaining)}`;
       if (remaining === 0) {
         remainingStr = `lunas`;
       } else if (remaining < 0) {
-        remainingStr = `kelebihan ${-remaining}`;
+        remainingStr = `kelebihan ${toIDR(-remaining)}`;
       }
 
-      return `${toProperCase(debt.from)} ke ${toProperCase(debt.to)} utang: ${totalDebt}, dibayar ${totalPaid}, ${remainingStr}`;
+      return `${toProperCase(debt.from)} ke ${toProperCase(debt.to)} utang: ${toIDR(totalDebt)}, dibayar ${toIDR(totalPaid)}, ${remainingStr}`;
     }).join(`\n`);
     await replier.text(replyMessage);
   }
