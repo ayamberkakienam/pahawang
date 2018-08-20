@@ -11,7 +11,7 @@ export class Replier {
   }
 
   async flex(message: FlexContainer, altText: string) {
-    return this.client.replyMessage(this.replyToken, { type: 'flex', altText, contents: message });
+    return this.client.replyMessage(this.replyToken, { type: 'flex', altText: altText.substr(0, 400), contents: message });
   }
 
 }
